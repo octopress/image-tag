@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'octopress-image-tag/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "image-tag"
+  spec.name          = "octopress-image-tag"
   spec.version       = Octopress::Tags::ImageTag::VERSION
   spec.authors       = ["Brandon Mathis"]
   spec.email         = ["brandon@imathis.com"]
