@@ -12,38 +12,52 @@ module Octopress
         @img = nil
 
         def initialize(tag_name, markup, tokens)
-          if markup =~ /title:['|"](.+?)['|"]/
-            @title = $1.strip
-          end
-
-          markup = markup.gsub(/title:['|"].+?['|"]/, '').strip
-
-          if markup =~ /(?<class>\S.*\s+)?(?<src>(?:https?:\/\/|\/|\S+\/)\S+)(?:\s+(?<width>\d\S+))?(?:\s+(?<height>\d\S+))?(?<alt>\s+.+)?/i
-            attributes = ['class', 'src', 'width', 'height', 'alt']
-            @img = attributes.reduce({}) { |img, attr| img[attr] ||= $~[attr].strip if $~[attr]; img }
-            text = @img['alt']
-
-            # Allow parsing "title" "alt"
-            if text =~ /(?:"|')(?<title>[^"']+)?(?:"|')\s+(?:"|')(?<alt>[^"']+)?(?:"|')/
-              @img['title']  = title
-              @img['alt']    = alt
-            else
-              # Set alt text and title from text
-              @img['alt'].gsub!(/"/, '') if @img['alt']
-            end
-          end
-
-          @img['title'] ||= @title
-          @img['alt'] ||= @title
+          @markup = markup
           super
         end
 
         def render(context)
-          if @img
-            "<img #{@img.collect {|k,v| "#{k}=\"#{v}\"" if v}.join(" ")}>"
-          else
-            "Error processing input, expected syntax: {% img [class name(s)] [http[s]:/]/path/to/image [width [height]] [title text | \"title text\" [\"alt text\"]] %}"
+          begin
+            attributes = image(context).collect do |k,v|
+              "#{k}=\"#{v}\"" if v
+            end.join(" ")
+
+            "<img #{attributes}>"
+          rescue
+            raise "Error processing input, expected syntax: {% img [class name(s)] [http[s]:/]/path/to/image [width [height]] [title text | \"title text\" [\"alt text\"]] %}"
           end
+        end
+
+        def image(context)
+          @markup = process_liquid(context)
+
+          title = /title:['|"](.+?)['|"]/
+          @title = @markup.scan(title).flatten.compact.last
+          @markup.gsub!(title, '')
+
+          if @markup =~ /(?<class>\S.*\s+)?(?<src>(?:https?:\/\/|\/|\S+\/)\S+)(?:\s+(?<width>\d\S+))?(?:\s+(?<height>\d\S+))?(?<alt>\s+.+)?/i
+            attributes = ['class', 'src', 'width', 'height', 'alt']
+            image = attributes.reduce({}) { |img, attr| img[attr] ||= $~[attr].strip if $~[attr]; img }
+            text = image['alt']
+
+            # Allow parsing "title" "alt"
+            if text =~ /(?:"|')(?<title>[^"']+)?(?:"|')\s+(?:"|')(?<alt>[^"']+)?(?:"|')/
+              image['title']  = title
+              image['alt']    = alt
+            else
+              # Set alt text and title from text
+              image['alt'].gsub!(/"/, '') if image['alt']
+            end
+          end
+
+          image['title'] ||= @title
+          image['alt'] ||= @title
+
+          image
+        end
+
+        def process_liquid(context)
+          Liquid::Template.parse(@markup).render!(context.environments.first)
         end
       end
     end

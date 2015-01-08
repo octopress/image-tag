@@ -1,2 +1,3 @@
 gems:
   - octopress-image-tag
+images_dir: /images
