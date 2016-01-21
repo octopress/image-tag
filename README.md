@@ -23,7 +23,7 @@ Then install the gem with Bundler
 Then add the gem to your Jekyll configuration.
 
     gems:
-      -octopress-image-tag
+      - octopress-image-tag
 
 ## Usage
 
